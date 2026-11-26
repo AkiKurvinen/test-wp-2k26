@@ -1,5 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap');
+body{
+  font-family: "Google Sans", system-ui, sans-serif;
+  background-color: antiquewhite;
+}
+#root{
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: white;
+   
+}
+header{
+    background-image: url(banner.jpg);
+    background-size: cover;
+    min-height: 200px;
+    padding: 1em;
+    position: relative;
+}
+header::before{
+    content: '';
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-image: url(mailat.svg);
+    position: absolute;
+    height: 50px;
+    width: 50px;
+    right: 1em;
+    top: 1em;
+}
+main{
+     padding: 1em;
+}
+footer{
+    background-color: black;
+    color: white;
+    padding: 1em;
+}
+footer a, footer a:visited{
+    color: white;
+}
 .skeleton_row {
-    width: 200px;
+    width: 100%;
     height: 24px;
     background-color: #999;
     margin-bottom: 0.5em;

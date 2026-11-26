@@ -4,67 +4,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="mailat.svg" type="image/x-icon">
     <title>WP Reader</title>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <header id="site-header"></header>
+        <main id="site-main"></main>
+        <footer id="site-footer"></footer>
+    </div>
 
     <script>
         const WPSITENAME = 'yoursitename';
         const WPSITENUMBER = '123456789';
         const TESTMODE = true;
 
-        const root = document.getElementById('root');
+        const headerEl = document.getElementById('site-header');
+        const mainEl = document.getElementById('site-main');
+        const footerEl = document.getElementById('site-footer');
 
-        const renderSkeleton = (length) => {
-            const skeleton ='<div class="skeleton_row"></div>'.repeat(length)
-            root.innerHTML = skeleton;
+        const skeletonRows = (length) =>
+            '<div class="skeleton_row"></div>'.repeat(length);
+
+        const fakeDelay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        async function fetchJSON(url, delay = 0) {
+            if (TESTMODE && delay) await fakeDelay(delay); // simulate loading time
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+            return res.json();
         }
 
-        function renderApp(meta, posts) {
-            root.innerHTML = `
-                <header>
-                    <h1>${meta.name}</h1
-                    <p>${meta.description}</p>
-                </header>
-                <main></main>
-                <div id="container"><ul></ul></div>`;
-            root.querySelector('h1').textContent =;
-            const list = root.querySelector('ul');
-            posts.posts.forEach(p => {
-                const li = document.createElement('li');
-                li.innerHTML = p.<titl>e; // WP titles can contain HTML entities
-                list.appendChild(li);
-            });
+        // --- Meta: header + footer ---
+        function renderMeta(meta) {
+            headerEl.innerHTML = `
+                <h1>${meta.name}</h1>
+                <p>${meta.description}</p>
+            `;
+            footerEl.innerHTML = `
+                <a href="${meta.URL}" target="_blank">${meta.URL}</a>
+            `;
         }
 
-        async function fetchWPContent() {
-            let site_url = `https://public-api.wordpress.com/rest/v1/sites/${WPSITENAME}.wordpress.com/`
-            let posts_url = `https://public-api.wordpress.com/rest/v1.1/sites/${WPSITENUMBER}/posts/`
-            if (TESTMODE) {
-                site_url = 'data/wp_site.json'
-                posts_url = 'data/wp_posts.json'
-                await new Promise(resolve => setTimeout(resolve, 2000)); // simulate loading time
+        async function loadMeta() {
+            headerEl.innerHTML = skeletonRows(2);
+            const url = TESTMODE
+                ? 'data/wp_site.json'
+                : `https://public-api.wordpress.com/rest/v1/sites/${WPSITENAME}.wordpress.com/`;
+            try {
+                const meta = await fetchJSON(url, 1000);
+                renderMeta(meta);
+            } catch (error) {
+                console.error("Failed to load site info:", error);
+                headerEl.innerHTML = '<div style="color: red;">Failed to load site info.</div>';
             }
-            return Promise.all([
-                fetch(site_url).then(r => r.json()),
-                fetch(posts_url).then(r => r.json())
-            ]).then(([meta, posts]) => ({ meta, posts }));
         }
 
-        async function main() {
+        // --- Posts: main content ---
+        function renderPosts(data) {
+            const filtered = data.posts.filter(post => post.categories.postitem);
+            const list = filtered.map(post => `<li>${post.title}</li>`).join('');
+            mainEl.innerHTML = `<ul>${list}</ul>`;
+        }
+
+        async function loadPosts() {
+            mainEl.innerHTML = skeletonRows(3);
+            const url = TESTMODE
+                ? 'data/wp_posts.json'
+                : `https://public-api.wordpress.com/rest/v1.1/sites/${WPSITENUMBER}/posts/`;
+            try {
+                const data = await fetchJSON(url, 3000);
+                renderPosts(data);
+            } catch (error) {
+                console.error("Failed to load posts:", error);
+                mainEl.innerHTML = '<div style="color: red;">Failed to load posts.</div>';
+            }
+        }
+
+        function main() {
             const params = new URLSearchParams(window.location.search);
             const urlSlug = params.get('slug');
-            renderSkeleton(2)
 
-            try {
-                const { meta, posts } = await fetchWPContent();
-                renderApp(meta, posts);
-            }
-            catch (error) {
-                console.error("Failed to load posts:", error);
-                root.innerHTML = '<div style="color: red;">Failed to load posts.</div>';
-            }
+            loadMeta();   // not awaited: runs in parallel
+            loadPosts();
         }
         main();
     </script>
