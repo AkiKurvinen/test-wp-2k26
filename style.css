@@ -1,0 +1,13 @@
+.skeleton_row {
+    width: 200px;
+    height: 24px;
+    background-color: #999;
+    margin-bottom: 0.5em;
+    animation: 1s linear infinite blink;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 50%;
+    }
+}

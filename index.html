@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+    <title>WP Reader</title>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        const WPSITENAME = 'yoursitename';
+        const WPSITENUMBER = '123456789';
+        const TESTMODE = true;
+
+        const root = document.getElementById('root');
+
+        const renderSkeleton = (length) => {
+            const skeleton ='<div class="skeleton_row"></div>'.repeat(length)
+            root.innerHTML = skeleton;
+        }
+
+        function renderApp(meta, posts) {
+            root.innerHTML = `
+                <header>
+                    <h1>${meta.name}</h1
+                    <p>${meta.description}</p>
+                </header>
+                <main></main>
+                <div id="container"><ul></ul></div>`;
+            root.querySelector('h1').textContent =;
+            const list = root.querySelector('ul');
+            posts.posts.forEach(p => {
+                const li = document.createElement('li');
+                li.innerHTML = p.<titl>e; // WP titles can contain HTML entities
+                list.appendChild(li);
+            });
+        }
+
+        async function fetchWPContent() {
+            let site_url = `https://public-api.wordpress.com/rest/v1/sites/${WPSITENAME}.wordpress.com/`
+            let posts_url = `https://public-api.wordpress.com/rest/v1.1/sites/${WPSITENUMBER}/posts/`
+            if (TESTMODE) {
+                site_url = 'data/wp_site.json'
+                posts_url = 'data/wp_posts.json'
+                await new Promise(resolve => setTimeout(resolve, 2000)); // simulate loading time
+            }
+            return Promise.all([
+                fetch(site_url).then(r => r.json()),
+                fetch(posts_url).then(r => r.json())
+            ]).then(([meta, posts]) => ({ meta, posts }));
+        }
+
+        async function main() {
+            const params = new URLSearchParams(window.location.search);
+            const urlSlug = params.get('slug');
+            renderSkeleton(2)
+
+            try {
+                const { meta, posts } = await fetchWPContent();
+                renderApp(meta, posts);
+            }
+            catch (error) {
+                console.error("Failed to load posts:", error);
+                root.innerHTML = '<div style="color: red;">Failed to load posts.</div>';
+            }
+        }
+        main();
+    </script>
+</body>
+</html>
